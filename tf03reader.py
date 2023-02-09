@@ -1,5 +1,6 @@
 import serial, threading
 from enum import Enum
+from typing import Callable
 
 class ParseState(Enum):
     WAIT_FOR_NEXT_FRAME = 1
@@ -7,7 +8,7 @@ class ParseState(Enum):
     READ_DIST_H = 3
 
 class TF03Reader(threading.Thread):
-    def __init__(self, interface: str, baud: int) -> None:
+    def __init__(self, interface: str, baud: int, cb: Callable[[int], None]) -> None:
         super().__init__(daemon=True)
         self.interface = interface
         self.baud = baud
@@ -15,6 +16,7 @@ class TF03Reader(threading.Thread):
         self._serial = None
         self._distance = None
         self._exitFlag = False
+        self._cb = cb
 
     def distance(self):
         self._lock.acquire()
@@ -29,29 +31,18 @@ class TF03Reader(threading.Thread):
 
     def run(self) -> None:
         self._serial = serial.Serial(self.interface, self.baud)
-        headerByteCount = 0
-        state = ParseState.WAIT_FOR_NEXT_FRAME
         while True:
-            byte = self._serial.read(1)
-            if byte == b'\x00':
-                continue
-            if state == ParseState.WAIT_FOR_NEXT_FRAME:
-                if byte == b'Y':
-                    headerByteCount += 1
-                    if headerByteCount == 2:
-                        state = ParseState.READ_DIST_L
-                        headerByteCount = 0
-                else:
-                    headerByteCount = 0          
-            elif state == ParseState.READ_DIST_L:
-                distL = int.from_bytes(byte, 'little')
-                state = ParseState.READ_DIST_H
-            elif state == ParseState.READ_DIST_H:
-                distH = int.from_bytes(byte, 'little')
-                self._lock.acquire()
-                self._distance = (distH << 8) + distL
-                self._lock.release()
-                state = ParseState.WAIT_FOR_NEXT_FRAME
-
-            if self._exitFlag:
-                return
+            if self._serial.in_waiting > 8:
+                bytes = self._serial.read(9)
+                self._serial.reset_input_buffer()
+                # Frame header: 2x 0x59 byte
+                if bytes[0] == 0x59 and bytes[1] == 0x59:
+                    self._lock.acquire()
+                    # Byte 2: distance low, Byte 3: distance high
+                    dist = bytes[2] + bytes[3]*256
+                    # 180m means error
+                    if dist != 18000: 
+                        self._distance = dist  
+                    self._lock.release()
+                    self._cb(dist)
+                    self._serial.reset_input_buffer()

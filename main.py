@@ -2,6 +2,7 @@
 
 import threading, time
 from tf03reader import TF03Reader
+from brakeconfiguration import BrakeConfiguration
 
 class Printer(threading.Thread):
     def __init__(self, tf03):
@@ -14,19 +15,21 @@ class Printer(threading.Thread):
 
     def run(self):
         while True:
-            print(self._tf03.distance)
             time.sleep(1)
+            print(f"{self._tf03.distance()}")
 
 
 def main():
-    tf03 = TF03Reader('COM12', 115200)
+    # '.\\COM7'
+    tf03 = TF03Reader('COM14', 115200)
     printer = Printer(tf03)
     tf03.start()
     printer.start()
-    while True: time.sleep(100)
+    tf03.join()
+    #while True: time.sleep(100)
+    #bc = BrakeConfiguration()
+    #bc.start()
+    #bc.join()
     
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        pass
+    main()

@@ -3,7 +3,7 @@ import obd, threading, time
 from obd2reader import OBD2Reader
 from enum import Enum
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime
 
 class BrakeState(Enum):
     WAIT_FOR_TARGET_SPEED = 1
