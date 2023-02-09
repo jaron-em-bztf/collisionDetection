@@ -1,14 +1,8 @@
 import serial, threading
-from enum import Enum
 from typing import Callable
 
-class ParseState(Enum):
-    WAIT_FOR_NEXT_FRAME = 1
-    READ_DIST_L = 2
-    READ_DIST_H = 3
-
 class TF03Reader(threading.Thread):
-    def __init__(self, interface: str, baud: int, cb: Callable[[int], None]) -> None:
+    def __init__(self, interface: str, baud: int) -> None:
         super().__init__(daemon=True)
         self.interface = interface
         self.baud = baud
@@ -16,6 +10,9 @@ class TF03Reader(threading.Thread):
         self._serial = None
         self._distance = None
         self._exitFlag = False
+        self._cb = None
+
+    def setCallback(self, cb: Callable[[int], None]) -> None:
         self._cb = cb
 
     def distance(self):
@@ -44,5 +41,6 @@ class TF03Reader(threading.Thread):
                     if dist != 18000: 
                         self._distance = dist  
                     self._lock.release()
-                    self._cb(dist)
+                    if self._cb != None:
+                        self._cb(dist)
                     self._serial.reset_input_buffer()

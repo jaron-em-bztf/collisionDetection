@@ -1,5 +1,4 @@
 import obd
-from obd import OBDCommand
 from typing import Callable
 
 class OBD2Reader:

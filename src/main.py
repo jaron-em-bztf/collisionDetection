@@ -1,34 +1,43 @@
 #!/usr/bin/env python3
 
-import threading, time
-from core import TF03Reader, OBD2Reader
+import sys
 
-class Printer(threading.Thread):
-    def __init__(self, tf03):
-        super().__init__(daemon=True)
-        self._tf03 = tf03
-        self._exitFlag = False
+from core import TF03Reader, OBD2Reader, BrakeConfiguration, DetectionService
+from spoof import OBD2Spoofer, TF03Spoofer
 
-    def exit(self):
-        self._exitFlag = True
-
-    def run(self):
-        while True:
-            time.sleep(1)
-            print(f"{self._tf03.distance()}")
-
+def brakeConfiguration() -> None:
+    bc = BrakeConfiguration()
+    bc.start()
+    bc.join()
 
 def main():
-    # '.\\COM7'
-    tf03 = TF03Reader('COM14', 115200)
-    printer = Printer(tf03)
-    tf03.start()
-    printer.start()
-    tf03.join()
-    #while True: time.sleep(100)
-    #bc = BrakeConfiguration()
-    #bc.start()
-    #bc.join()
+    tf03 = None
+    obd2 = None
+
+    if len(sys.argv) == 2:
+        arg = sys.argv[1]
+        if arg == "brakeconfiguration":
+            brakeConfiguration()
+            return
+        elif arg == "test":
+            tf03 = TF03Spoofer()
+            obd2 = OBD2Spoofer()
+        else:
+            print(f"Unknown argument {arg}")
+            sys.exit(1)
+        
+    if tf03 == None and obd2 == None:
+        tf03 = TF03Reader('COM14', 115200)
+        obd2 = OBD2Reader('COM7')
+
+    assert(tf03 != None and obd2 != None)
+    service = DetectionService(tf03, obd2)
+    service.start()
+
     
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("Shutdown")
+        sys.exit(0)

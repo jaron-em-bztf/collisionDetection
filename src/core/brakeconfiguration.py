@@ -1,6 +1,6 @@
 import threading, time
 
-from obd2reader import OBD2Reader
+from .obd2reader import OBD2Reader
 from enum import Enum
 from collections import OrderedDict
 from datetime import datetime
