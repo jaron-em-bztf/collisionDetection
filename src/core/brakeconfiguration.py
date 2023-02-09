@@ -1,4 +1,4 @@
-import obd, threading, time
+import threading, time
 
 from obd2reader import OBD2Reader
 from enum import Enum
@@ -21,19 +21,16 @@ class BrakeConfiguration(threading.Thread):
         self._state = BrakeState.WAIT_FOR_TARGET_SPEED
 
     def run(self) -> None:
-        self._obd.watch(obd.commands.SPEED, callback=self._newMp)
+        self._obd.watchSpeed(self._newMp)
         self._obd.start()
         while True:
             time.sleep(0.1)
             if self._state == BrakeState.FINISHED:
                 return
 
-    def _newMp(self, data: obd.OBDResponse) -> None:
-        if data.value == None:
-            return
+    def _newMp(self, kmh: int) -> None:
         saveValue = False
-        kmh = data.value.magnitude
-        ms = round(data.value / 3.6, 2)
+        ms = round(kmh / 3.6, 2)
         print(kmh)
         if (self._state == BrakeState.WAIT_FOR_TARGET_SPEED):
             if (kmh >= BrakeConfiguration.TARGET_KMH):
@@ -56,7 +53,7 @@ class BrakeConfiguration(threading.Thread):
 
     def _stop(self) -> None:
         self._obd.stop()
-        self._obd.unwatch(obd.commands.SPEED, self._newMp)
+        self._obd.unwatchAll()
 
     def _analyzeResults(self) -> None:
         print("analyze")

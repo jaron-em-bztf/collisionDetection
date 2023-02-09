@@ -12,9 +12,9 @@ class OBD2Reader:
     def stop(self) -> None:
         self._conn.stop()
 
-    def watch(self, cmd: OBDCommand , callback: Callable[[int], None]) -> None:
-        self._conn.watch(cmd, callback)
-        # TODO watchSpeed method, return int
+    # returns kph
+    def watchSpeed(self, callback: Callable[[int], None]) -> None:
+        self._conn.watch(obd.commands.SPEED, lambda resp: callback(resp.value.to("kph").magnitude))
 
-    def unwatch(self, cmd: OBDCommand, callback: Callable[[int], None]) -> None:
-        self._conn.unwatch(cmd, callback)
+    def unwatchAll(self) -> None:
+        self._conn.unwatch(obd.commands.SPEED)
