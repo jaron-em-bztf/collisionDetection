@@ -3,7 +3,7 @@
 import sys
 
 from core import TF03Reader, OBD2Reader, BrakeConfiguration, DetectionService
-from spoof import OBD2Spoofer, TF03Spoofer
+from spoof import OBD2Spoofer, TF03Spoofer, SpoofingServer
 
 def brakeConfiguration() -> None:
     bc = BrakeConfiguration()
@@ -22,6 +22,8 @@ def main():
         elif arg == "test":
             tf03 = TF03Spoofer()
             obd2 = OBD2Spoofer()
+            server = SpoofingServer(5000, obd2, tf03)
+            server.start()
         else:
             print(f"Unknown argument {arg}")
             sys.exit(1)

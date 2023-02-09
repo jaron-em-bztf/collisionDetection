@@ -16,8 +16,8 @@ class DetectionService:
             th.join()
 
     def _distanceUpdate(self, dist: int) -> None:
-        print(f"New dist: {dist}")
+        print(f"New dist: {dist} cm")
 
     def _speedUpdate(self, kph: int) -> None:
         ms = round(kph / 3.6, 2)
-        print(f"New speed {ms}")
+        print(f"New speed {ms} m/s")
