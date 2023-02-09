@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 import threading, time
-from tf03reader import TF03Reader
-from brakeconfiguration import BrakeConfiguration
+from core import TF03Reader, OBD2Reader
 
 class Printer(threading.Thread):
     def __init__(self, tf03):
