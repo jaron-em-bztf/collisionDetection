@@ -5,13 +5,18 @@ from .obd2reader import OBD2Reader
 from .soundplayer import SoundPlayer
 
 class DetectionService:
+    REACTION_TIME = 1000 # milliseconds
+    BUFFER_DIST = 10 # cm
+
     def __init__(self, tf03: TF03Reader, obd2: OBD2Reader) -> None:
         self._tf03 = tf03
         self._obd = obd2
         self._player = SoundPlayer(f"{ROOT_DIR}/assets/warning_sound.wav")
         self._tf03.setCallback(self._distanceUpdate)
         self._obd.watchSpeed(self._speedUpdate)
-        self._threads = [self._tf03, self._obd]
+        self._lastSpeed = 0
+        self._lastDist = 0
+        self._threads = [self._tf03, self._obd, self._player]
  
     def start(self) -> None:
         for th in self._threads:
@@ -20,9 +25,12 @@ class DetectionService:
             th.join()
  
     def _distanceUpdate(self, dist: int) -> None:
-        print(f"New dist: {dist} cm")
+        self._lastDist = dist
+        self._updateReactionPath()
  
     def _speedUpdate(self, kph: int) -> None:
-        ms = round(kph / 3.6, 2)
-        print(f"New speed {ms} m/s")
- 
+        self._lastSpeed = round(kph / 3.6, 2) # ms
+        self._updateReactionPath()
+
+    def _updateReactionPath(self) -> None:
+        self._player.setPlayWarning(self._lastDist != 0 and (self._lastSpeed * self.REACTION_TIME / 1000) > (self._lastDist + self.BUFFER_DIST) / 100)
