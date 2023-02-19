@@ -1,13 +1,10 @@
-from definitions import ROOT_DIR
+from definitions import ROOT_DIR, REACTION_TIME, BUFFER_DIST
 
 from .tf03reader import TF03Reader
 from .obd2reader import OBD2Reader
 from .soundplayer import SoundPlayer
 
 class DetectionService:
-    REACTION_TIME = 1000 # milliseconds
-    BUFFER_DIST = 10 # cm
-
     def __init__(self, tf03: TF03Reader, obd2: OBD2Reader) -> None:
         self._tf03 = tf03
         self._obd = obd2
@@ -33,4 +30,4 @@ class DetectionService:
         self._updateReactionPath()
 
     def _updateReactionPath(self) -> None:
-        self._player.setPlayWarning(self._lastDist != 0 and (self._lastSpeed * self.REACTION_TIME / 1000) > (self._lastDist + self.BUFFER_DIST) / 100)
+        self._player.setPlayWarning(self._lastDist != 0 and (self._lastSpeed * REACTION_TIME / 1000) > (self._lastDist + BUFFER_DIST) / 100)
